@@ -2,7 +2,7 @@
 
 REST API for a peer-to-peer lending platform. Borrowers submit loan applications; lenders accept applications and funded loans are persisted with repayment dates. Built with **Spring Boot** and **Spring Data JPA**.
 
-> **Status:** Core lending flow is implemented (request → accept → list). Further work includes API error handling, validation, auth, and production-ready persistence.
+> **Status:** Core lending flow is implemented (request → accept → list). Further work includes API error handling, validation, auth, and production-ready persistence. 
 
 ## Features
 
