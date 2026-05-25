@@ -1,8 +1,17 @@
 # Lending Engine
 
-REST API for a peer-to-peer lending platform. Borrowers submit loan applications; lenders can browse requests and accept loans. Built with **Spring Boot** and **Spring Data JPA**.
+REST API for a peer-to-peer lending platform. Borrowers submit loan applications; lenders accept applications and funded loans are persisted with repayment dates. Built with **Spring Boot** and **Spring Data JPA**.
 
-> **Status:** Early development — core endpoints and domain models are in place; loan acceptance and related business logic are still being implemented.
+> **Status:** Core lending flow is implemented (request → accept → list). Further work includes API error handling, validation, auth, and production-ready persistence.
+
+## Features
+
+- Submit loan applications linked to registered borrowers
+- List all pending loan applications
+- Accept a loan application on behalf of a lender (creates a `Loan` record)
+- List all funded loans with borrower, lender, amount, rate, and due dates
+- List users (seed data loaded on startup for local development)
+- Domain exceptions when a user or loan application is not found
 
 ## Tech stack
 
@@ -53,8 +62,11 @@ Base URL: `http://localhost:8080`
 |--------|------|-------------|
 | `POST` | `/loan/request` | Submit a loan application |
 | `GET` | `/loan/requests` | List all loan applications |
-| `GET` | `/users` | List users |
-| `POST` | `/loan/accept/{leaderId}/{loanApplicationId}` | Accept a loan (in progress) |
+| `POST` | `/loan/accept/{leaderId}/{loanApplicationId}` | Lender accepts a loan application |
+| `GET` | `/loans` | List all funded loans |
+| `GET` | `/users` | List all users |
+
+On startup, the application seeds three sample users (IDs `1`–`3`) for local development.
 
 ### Example: request a loan
 
@@ -78,7 +90,28 @@ curl -X POST http://localhost:8080/loan/request \
 | `daysToRepay` | `int` | Repayment term in days |
 | `interestRate` | `double` | Interest rate |
 
-On startup, the application seeds sample users (IDs `1`–`3`) for local development.
+Returns `404`-style behavior via `UserNotFoundException` if the borrower does not exist.
+
+### Example: accept a loan
+
+Use IDs from `GET /loan/requests` and a lender user ID from `GET /users`:
+
+```bash
+curl -X POST http://localhost:8080/loan/accept/2/1
+```
+
+- `leaderId` — lender user ID (path segment name in code)
+- `loanApplicationId` — loan application ID
+
+Creates a `Loan` with borrower and lender, amount, interest rate, `dateLent` (today), and `dateDue` based on the application term. Throws if the lender or application is not found.
+
+### Example: list funded loans
+
+```bash
+curl http://localhost:8080/loans
+```
+
+Each loan includes borrower, lender, amount, interest rate, and lent/due dates.
 
 ## Project structure
 
@@ -88,8 +121,8 @@ src/main/java/com/peerlender/lendingengine/
 ├── domain/
 │   ├── model/              # JPA entities (User, LoanApplication, Loan)
 │   ├── repository/         # Spring Data repositories
-│   ├── service/            # Domain services and adapters
-│   └── exception/
+│   ├── service/            # LoanService, LoanApplicationAdapter
+│   └── exception/          # UserNotFoundException, LoanApplicationNotFoundException
 └── LendingengineApplication.java
 ```
 
@@ -99,8 +132,12 @@ Application settings live in `src/main/resources/application.properties`. The de
 
 ## Roadmap
 
-- [ ] Complete loan acceptance flow
-- [ ] Validation and error responses for API clients
+- [x] Loan request and listing
+- [x] Loan acceptance and funded loan listing
+- [x] Basic domain exceptions (user / application not found)
+- [ ] Structured API error responses (e.g. `@ControllerAdvice`)
+- [ ] Request validation (Bean Validation)
+- [ ] Remove or mark accepted applications from the open queue
 - [ ] Production database configuration
 - [ ] API documentation (e.g. OpenAPI / Swagger)
 - [ ] Authentication and authorization

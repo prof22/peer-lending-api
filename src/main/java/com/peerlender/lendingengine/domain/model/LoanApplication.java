@@ -58,6 +58,10 @@ public final class LoanApplication {
         return Objects.hash(amount, borrower, repaymentTermInDays, interestRate);
     }
 
+    public long getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
         return "LoanRequest{" +
